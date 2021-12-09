@@ -13,20 +13,33 @@ function App() {
   const [isPlaying, setIsPlaying] = useState(false);
   const [songInfo, setSongInfo] = useState({
     currentTime: 0,
-    duration: 0
+    duration: 0,
+    animationPercentage: 0
   })
   const [librarySatus, setLibrarySatus] = useState(false);
 
   const TimeUpdateHandler = (e) => {
     const currentTime = e.target.currentTime;
     const duration = e.target.duration;
-    setSongInfo({ ...songInfo, currentTime, duration });
+
+    const roundCurrent = Math.round(currentTime);
+    const roundDuration = Math.round(duration);
+    const animation = Math.round((roundCurrent / roundDuration) * 100)
+
+    console.log(animation);
+    setSongInfo({ ...songInfo, currentTime, duration, animationPercentage: animation });
   }
+
+  const songEndHander = async () => {
+    let currentIndex = songs.findIndex((song) => song.id === currentSong.id);
+    await setCurrentSong(songs[(currentIndex + 1) % songs.length])
+    if(isPlaying) audioRef.current.play();
+  };
 
   const audioRef = useRef(null);
 
   return (
-    <div>
+    <div className={`App ${librarySatus ? 'library-active' : ''}`}>
       <Nav
         librarySatus={librarySatus}
         setLibrarySatus={setLibrarySatus} />
@@ -57,7 +70,8 @@ function App() {
         onLoadedMetadata={TimeUpdateHandler}
         onTimeUpdate={TimeUpdateHandler}
         ref={audioRef}
-        src={currentSong.audio}>
+        src={currentSong.audio}
+        onEnded={songEndHander}>
       </audio>
     </div>
   );
